@@ -1,47 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useState } from 'react';
 import './App.css';
+import GameBoard from './components/GameBoard';
+import GameStatus from './components/GameStatus';
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
+  const [squares, setSquares] = useState(Array(9).fill(null));
+  const [isXNext, setIsXNext] = useState(true);
 
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+  const calculateWinner = (squares) => {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+      [0, 4, 8], [2, 4, 6] // diagonals
+    ];
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    for (const [a, b, c] of lines) {
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
+      }
+    }
+    return null;
   };
+
+  const handleSquareClick = (index) => {
+    if (squares[index] || calculateWinner(squares)) return;
+    
+    const newSquares = squares.slice();
+    newSquares[index] = isXNext ? 'X' : 'O';
+    setSquares(newSquares);
+    setIsXNext(!isXNext);
+  };
+
+  const handleRestart = () => {
+    setSquares(Array(9).fill(null));
+    setIsXNext(true);
+  };
+
+  const winner = calculateWinner(squares);
+  const isDraw = !winner && squares.every(square => square !== null);
 
   return (
     <div className="App">
-      <header className="App-header">
+      <div className="game-container">
+        <h1>Tic Tac Toe</h1>
+        <GameStatus 
+          winner={winner}
+          currentPlayer={isXNext ? 'X' : 'O'}
+          isDraw={isDraw}
+        />
+        <GameBoard 
+          squares={squares}
+          onSquareClick={handleSquareClick}
+        />
         <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          className="restart-button"
+          onClick={handleRestart}
+          aria-label="Restart game"
         >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
+          Restart Game
         </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      </div>
     </div>
   );
 }
